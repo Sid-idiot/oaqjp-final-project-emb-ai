@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Emotion Detector</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>Emotion Detector</h1>
+
+        <p class="subtitle">
+            Analyze the emotional tone of your text
+        </p>
+
+        <form id="emotionForm">
+
+            <label for="text">
+                Enter a sentence:
+            </label>
+
+            <textarea
+                id="text"
+                name="text"
+                rows="5"
+                placeholder="Example: I am extremely happy today!"
+            ></textarea>
+
+            <button type="submit">
+                Detect Emotion
+            </button>
+
+        </form>
+
+        <div id="result" class="result hidden"></div>
+
+    </main>
+
+    <script>
+        const form = document.getElementById("emotionForm");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const text = document
+                .getElementById("text")
+                .value
+                .trim();
+
+            if (!text) {
+                result.className = "result error";
+
+                result.innerHTML =
+                    "<strong>Error:</strong> " +
+                    "Please enter a valid text.";
+
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    "/emotionDetector?text=" +
+                    encodeURIComponent(text)
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    result.className = "result error";
+
+                    result.innerHTML =
+                        "<strong>Error:</strong> " +
+                        data.error;
+
+                    return;
+                }
+
+                result.className = "result";
+
+                result.innerHTML = `
+                    <h2>Emotion Analysis</h2>
+
+                    <div class="emotion">
+                        <span>Anger</span>
+                        <span>${data.anger}</span>
+                    </div>
+
+                    <div class="emotion">
+                        <span>Disgust</span>
+                        <span>${data.disgust}</span>
+                    </div>
+
+                    <div class="emotion">
+                        <span>Fear</span>
+                        <span>${data.fear}</span>
+                    </div>
+
+                    <div class="emotion">
+                        <span>Joy</span>
+                        <span>${data.joy}</span>
+                    </div>
+
+                    <div class="emotion">
+                        <span>Sadness</span>
+                        <span>${data.sadness}</span>
+                    </div>
+
+                    <div class="dominant">
+                        Dominant Emotion:
+                        <strong>
+                            ${data.dominant_emotion}
+                        </strong>
+                    </div>
+                `;
+
+            } catch (error) {
+                result.className = "result error";
+
+                result.innerHTML =
+                    "<strong>Error:</strong> " +
+                    "Unable to connect to server.";
+            }
+        });
+    </script>
+
+</body>
+
+</html>
