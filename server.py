@@ -1,35 +1,57 @@
 """
-Flask web server for the Emotion Detector application.
+Flask server for the Emotion Detection application.
 """
 
 from flask import Flask, jsonify, render_template, request
 
-from EmotionDetection.emotion_detection import emotion_detector
-
+from emotion_detection import emotion_detector
 
 app = Flask(__name__)
 
 
 @app.route("/")
-def home():
-    """Render the Emotion Detector web interface."""
+def index():
+    """Render the emotion detector interface."""
     return render_template("index.html")
 
 
-@app.route("/emotionDetector", methods=["GET"])
-def detect_emotion():
-    """Detect emotion from the supplied text."""
-    text = request.args.get("text", "").strip()
+@app.route("/emotionDetector")
+def emotion_detector_endpoint():
+    """Analyze text submitted through the web interface."""
 
-    if not text:
-        return jsonify({
-            "error": "Please enter a valid text.",
-            "status_code": 400
-        }), 400
+    text_to_analyze = request.args.get("textToAnalyze", "").strip()
 
-    result = emotion_detector(text)
+    if not text_to_analyze:
+        return "Invalid input! Try again.", 400
 
-    return jsonify(result)
+    result = emotion_detector(text_to_analyze)
+
+    if result["status_code"] != 200:
+        return (
+            f"Emotion detection service unavailable "
+            f"(status code: {result['status_code']})",
+            503
+        )
+
+    formatted_response = (
+        "For the given statement, the system response is "
+        f"'anger': {result['anger']}, "
+        f"'disgust': {result['disgust']}, "
+        f"'fear': {result['fear']}, "
+        f"'joy': {result['joy']} and "
+        f"'sadness': {result['sadness']}. "
+        f"The dominant emotion is {result['dominant_emotion']}."
+    )
+
+    return jsonify({
+        "response": formatted_response,
+        "anger": result["anger"],
+        "disgust": result["disgust"],
+        "fear": result["fear"],
+        "joy": result["joy"],
+        "sadness": result["sadness"],
+        "dominant_emotion": result["dominant_emotion"]
+    })
 
 
 if __name__ == "__main__":
